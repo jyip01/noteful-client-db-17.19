@@ -5,12 +5,14 @@ const express = require('express');
 const noteRouter = express.Router();
 const bodyParser = express.json();
 const logger = require('../logger');
-const notesService = require('./notes/notesService');
+const notesService = require('./notesService');
 const xss = require('xss');
 
 const serializeNote = note => ({
-  ...note,
+  id: note.id,
   name: xss(note.name),
+  modified: note.modified,
+  folderId: xss(note.folder_id),
   content: xss(note.content)
 });
 
@@ -18,15 +20,15 @@ noteRouter
   .route('/api/notes')
   .get((req,res,next) => {
     const knexInstance = req.app.get('db');
-    foldersService.getAllNotes(knexInstance)
+    noteService.getAllNotes(knexInstance)
       .then(notes => {
         res.json(notes.map(note => serializeNote(note)));
       })
       .catch(next);
   })
   .post(bodyParser, (req,res,next) =>{
-    const { name,content,folder_id } = req.body;
-    const newNote = { name,content,folder_id};
+    const { name, modified, folder_id, content } = req.body;
+    const newNote = { name, modified, folder_id, content}; 
     notesService.insertNote(
       req.app.get('db'),
       newNote
@@ -70,14 +72,14 @@ noteRouter
       .catch(next);
   })
   .patch(bodyParser, (req, res, next) => {
-    const { name, content, folder_id } = req.body;
-    const noteToUpdate = { name, content,folder_id };
+    const { name, modified, folder_id, content } = req.body;
+    const noteToUpdate = { name, modified, folder_id, content };
 
     const numberOfValues = Object.values(noteToUpdate).filter(Boolean).length;
     if (numberOfValues === 0) {
       return res.status(400).json({
         error: {
-          message: 'request body must contain either \'name\', \'content\', or \'folder_id\''
+          message: 'request body must contain either \'name\', \'modified\', \'folder_id\', or \'content\''
         }
       });
     }
@@ -92,4 +94,6 @@ noteRouter
       })
       .catch(next);
   });
+
+  module.exports = noteRouter;  
   

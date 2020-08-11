@@ -5,19 +5,19 @@ const express = require('express');
 const folderRouter = express.Router();
 const bodyParser = express.json();
 const logger = require('../logger');
-const foldersService = require('./folders/foldersService');
+const foldersService = require('./foldersService');
 const xss = require('xss');
 
 const serializeFolder = folder => ({
-  id: folder.id,
+  id: xss(folder.id),
   name: xss(folder.name)
 });
 
-const serializeNote = note => ({
+/*const serializeNote = note => ({
   ...note,
   name: xss(note.name),
   content: xss(note.content)
-});
+});*/
 
 folderRouter
   .route('/api/folders')
@@ -102,4 +102,6 @@ folderRouter
       })
       .catch(next);
   });
+
+  module.exports = folderRouter;
   
